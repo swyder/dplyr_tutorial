@@ -1,0 +1,446 @@
+---
+title: "URPP tutorial on dplyr/tidyverse"
+author: "Stefan Wyder - URPP Evolution in Action"
+date: "June 1, 2018"
+output:
+  beamer_presentation:
+    includes:
+      in_header: latex_reducedSpacing.tex
+    fig_caption: false
+    keep_tex: yes
+    pandoc_args: --latex-engine=xelatex
+    theme: Rochester
+---
+
+<!-- https://stackoverflow.com/questions/35734525/reduce-space-between-code-chunks-and-code-output-in-rmarkdown-beamer-presentation -->
+<!-- reduced vertical spacing between: -->
+<!--  - code chunks and output -->
+<!--  - bullet points -->
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+#knitr::opts_chunk$set(fig.lp = '')
+```
+
+## R for Data Science
+
+![book cover](IMG/cover.png)
+[http://r4ds.had.co.nz](http://r4ds.had.co.nz)
+
+## Installation
+
+You can install the complete tidyverse with a single line of code:
+```{r, echo = TRUE, eval = FALSE}
+install.packages("tidyverse")
+```
+<!-- forces empty line - Markdown double space didn't work -->
+\leavevmode \newline
+install also the data package nycflights13 
+```{r, echo = TRUE, eval = FALSE}
+install.packages("nycflights13")
+```
+
+## Load packages
+
+<!-- message=FALSE is required, see https://community.rstudio.com/t/tidyverse-1-2-1-knitting-to-pdf-issue/2880/5 -->
+```{r, echo = TRUE, eval = TRUE, message=FALSE}
+library(tidyverse)
+library(nycflights13)
+```
+\leavevmode \newline
+This data frame contains all 336,776 flights that departed from New York City in 2013
+flights  
+see `?flights`
+
+
+## Data Science cycle
+
+![cycle](IMG/data-science-cycle.png)
+
+## Table of Contents
+
+- Data transformation (Chapter 5)
+- Tibbles (Chapter 10)
+- Relational data (Chapter 13)
+
+
+## Tidy data
+
+There are three interrelated rules which make a dataset tidy:
+
+1. Each variable must have its own column.
+2. Each observation must have its own row.
+3. Each value must have its own cell.
+
+![tidy-dataset](IMG/tidy-dataset.png)
+
+
+## Tibble (Chapter 10)
+
+Tibbles are data frames, but slightly tweaked to work better in the tidyverse  
+- better printing  
+- never changes the type of the inputs (strings to factors!)  
+- never changes the names of variables  
+
+```{r, echo = TRUE, evol=TRUE,size=2}
+flights
+```
+
+
+## 5 key dplyr functions
+
+- `filter()`: Pick observations by their values
+- `arrange()`: Reorder the rows
+- `select()`: Pick variables by their names
+- `mutate()`: Create new variables with functions of existing variables
+- `summarise()`: Collapse many values down to a single summary
+
+## 1 example
+
+```{r, echo = TRUE}
+filter(flights, month == 1, day == 1)
+```
+
+## `filter()`
+
+Guess which ones are correct. What does it do?
+\leavevmode \newline
+```{r eval=FALSE, echo=TRUE}
+filter(flights, month == 1, day == 1)
+filter(flights, month == 11 & month == 12)
+filter(flights, month == 11 | month == 12)
+filter(flights, month == 11 | 12)
+filter(flights, month %in% c(11, 12))
+```
+
+## `filter()`
+
+```{r eval=FALSE, echo=TRUE}
+# finds all flights that departed on Jan 1
+filter(flights, month == 1, day == 1)
+filter(flights, month == 1 & day == 1)
+# finds all flights that departed in Nov or Dec:
+filter(flights, month == 11 | month == 12)  
+# doesn't work:
+filter(flights, month == 11 | 12)
+# %in% also works:
+filter(flights, month %in% c(11, 12))
+```
+
+## Boolean operations
+
+![boolean-operations](IMG/boolean-operations.png)
+
+## Be careful with arithmetric comparisons
+
+```{r, echo=TRUE}
+sqrt(2) ^ 2 == 2
+1/49 * 49 == 1
+```
+\leavevmode \newline \newline \newline   
+Use `near` with a tolerance:
+```{r, echo=TRUE}
+near(sqrt(2) ^ 2,  2)
+near(1 / 49 * 49, 1)
+```
+
+## Exercise 1
+
+Find flights that weren’t delayed (on arrival or departure) by more than two hours
+
+## Solution 1
+
+You could use either of the following two filters:
+\leavevmode \newline
+```{r, echo=TRUE, eval = FALSE}
+filter(flights, arr_delay <= 120, dep_delay <= 120)
+filter(flights, !(arr_delay > 120 | dep_delay > 120))
+```
+
+## Missing values
+
+`filter()` only includes rows where the condition is TRUE; it excludes both FALSE and NA values.
+\leavevmode \newline \newline
+If you want to preserve missing values, ask for them explicitly:
+
+```{r, echo=TRUE, eval = FALSE}
+filter(df, is.na(x) | x > 1)
+```
+
+## Exercises
+
+[5.2.4 Exercises](http://r4ds.had.co.nz/transform.html#exercises-7)
+
+
+## `arrange()`: order rows 
+
+`arrange()` works similarly to `filter()` except that instead of selecting rows, it changes their order.  
+\leavevmode \newline
+```{r, echo=TRUE, eval = FALSE}
+arrange(flights, year)
+arrange(flights, year, month, day)
+arrange(flights, desc(arr_delay))  # order in decreasing order
+```
+\leavevmode \newline
+missing values are always sorted at the end
+
+
+## Exercises
+
+[5.3.1 Exercises](http://r4ds.had.co.nz/transform.html#exercises-8)
+
+
+## Select columns with `select()`
+
+```{r, echo=TRUE, eval = FALSE}
+select(flights, year, month, day)
+```
+
+```{r, echo=TRUE, eval = FALSE}
+# Select all columns between year and day (inclusive)
+select(flights, year:day)
+```
+\leavevmode \newline
+`everything()` is useful if you have a handful of variables you’d like to move to the start of the data frame
+```{r, echo=TRUE, eval = FALSE}
+select(flights, time_hour, air_time, everything())
+```
+
+## `select()`
+
+There are a number of helper functions you can use within select():
+
+- `starts_with("abc")`: matches names that begin with “abc”.
+- `ends_with("xyz")`: matches names that end with “xyz”.
+- `contains("ijk")`: matches names that contain “ijk”.
+- `matches("(.)\\1")`: selects variables that match a regular expression. Here: any variables that contain repeated characters. 
+- `num_range("x", 1:3)` matches x1, x2 and x3.
+
+See `?select` for more details.
+
+
+## Exercises
+
+[5.4.1 Exercises](http://r4ds.had.co.nz/transform.html#exercises-9)
+
+
+## Add new variables with `mutate()`
+
+`mutate()` always adds new columns at the end of your dataset, as function of the existing columns.
+
+```{r, echo=TRUE, eval = FALSE}
+flights_sml <- select(flights, 
+  year:day, 
+  ends_with("delay"), 
+  distance, 
+  air_time
+)
+mutate(flights_sml,
+  gain = arr_delay - dep_delay,
+  hours = air_time / 60,
+  gain_per_hour = gain / hours
+)
+```
+Note that you can refer to columns that you’ve just created
+
+
+## `mutate()` works with all vectorized functions 
+
+The key property is that the function must be vectorised: it must take a vector of values as input, return a vector with the same number of values as output.
+
+- Arithmetic operators: `+` `-` `*` `/` `^`
+- Modular arithmetic: `%/%` (integer division) and `%%` (remainder)
+- Logs: `log()`, `log2()`, `log10()`
+- Offsets: `lead()` and `lag()`
+- Logical comparisons: `<`, `<=`, `>`, `>=`, `!=`
+- Ranking: `min_rank()`, `min_rank(desc())` also its variants `row_number()`, `dense_rank()`, `percent_rank()`, `cume_dist()`, `ntile()`
+- Cumulative and rolling aggregates: running sums, products, mins, maxes and means: `cumsum()`, `cumprod()`, `cummin()`, `cummax()` and `cummean()` 
+- conjuction of functions: i.e. `x / sum(x)`: proportion of a total, and `y - mean(y)`: diff from the mean
+
+
+## transmute()
+
+If you only want to keep the new variables, use transmute():
+\leavevmode \newline
+```{r, echo=TRUE, eval = FALSE}
+transmute(flights,
+  dep_time,
+  hour = dep_time %/% 100,
+  minute = dep_time %% 100
+)
+```
+\leavevmode \newline
+%/% (integer division) handy to because it allows you to break integers up into pieces (here: hours)
+
+
+
+## Exercises
+
+[5.5.2 Exercises](http://r4ds.had.co.nz/transform.html#exercises-10)
+
+
+## Grouped summaries with `summarise()`
+
+summarise() is not terribly useful unless we pair it with group_by():
+\leavevmode \newline \newline
+```{r, echo=TRUE, eval=TRUE}
+by_day <- group_by(flights, year, month, day)
+summarise(by_day, delay = mean(dep_delay, na.rm = TRUE))
+```
+
+
+
+## Combining multiple operations with the pipe
+
+Explore the relationship between the distance and average delay for each location
+\leavevmode \newline
+```{r, echo=TRUE, eval = FALSE}
+by_dest <- group_by(flights, dest)
+delay <- summarise(by_dest,
+  count = n(),
+  dist = mean(distance, na.rm = TRUE),
+  delay = mean(arr_delay, na.rm = TRUE)
+)
+delay <- filter(delay, count > 20, dest != "HNL")
+```
+\leavevmode \newline
+a little frustrating to write because we have to give each intermediate data frame a name, even though we don’t care about it. Naming things is hard and slow.
+
+
+
+## the pipe %>%
+
+There’s another way to tackle the same problem with the pipe, %>%:
+
+```{r, echo=TRUE, eval = FALSE}
+delays <- flights %>% 
+  group_by(dest) %>% 
+  summarise(
+    count = n(),
+    dist = mean(distance, na.rm = TRUE),
+    delay = mean(arr_delay, na.rm = TRUE)
+  ) %>% 
+  filter(count > 20, dest != "HNL")
+```
+
+- pronounced as "then"
+- much more readable (left-right,top-bottom)
+- key criteria for belonging to the tidyverse (only exception: ggplot2)
+
+
+## Missing values
+
+```{r, echo=TRUE}
+flights %>% 
+  group_by(year, month, day) %>% 
+  summarise(mean = mean(dep_delay))
+```
+\leavevmode \newline \newline
+We get a lot of missing values! Usual rule of missing values: if there’s any missing value in the input, the output will be a missing value.
+
+
+## Missing values cont.
+
+Fortunately, all aggregation functions have an na.rm argument which removes the missing values prior to computation:
+
+```{r, echo=TRUE}
+flights %>% 
+  group_by(year, month, day) %>% 
+  summarise(mean = mean(dep_delay, na.rm = TRUE))
+```
+\leavevmode \newline \newline
+Missing values are due to cancelled flights. In this case we could also create a new data frame without cancelled flights.
+
+
+## Counts
+
+Whenever you do any aggregation, it’s always a good idea to include either a count `n()`, or a count of non-missing values `sum(!is.na(x))`. Not to draw conclusions based on very small amounts of data
+\leavevmode \newline  
+```{r, echo=TRUE, eval=TRUE}
+not_cancelled <- flights %>% 
+  filter(!is.na(dep_delay), !is.na(arr_delay))
+delays <- not_cancelled %>% 
+  group_by(tailnum) %>% 
+  summarise(
+    delay = mean(arr_delay, na.rm = TRUE),
+    n = n()
+  )
+```
+
+
+## Plot
+
+It’s often useful to filter out the groups with the smallest numbers of observations, so you can 
+see more of the pattern and less of the extreme variation in the smallest groups
+```{r, echo=TRUE, eval = TRUE, fig.width=2, fig.height=2}
+delays %>% 
+  filter(n > 25) %>% 
+  ggplot(mapping = aes(x = n, y = delay)) + 
+    geom_point(alpha = 1/10)
+```
+
+
+## Variation
+
+- Measures of location: `mean(x)`, `median(x)`
+- Measures of spread: `sd(x)`, `IQR(x)`, `mad(x)`
+- Measures of rank: `min(x)`, `quantile(x, 0.25)`, `max(x)`
+- Measures of position: `first(x)`, `nth(x, 2)`, `last(x)`: allow to set a default position
+- Counts: `n()` returns the size of the current group. 
+  `sum(!is.na(x))` returns the number of non-missing values
+  `n_distinct(x)` counts the number of distinct (unique) values
+
+
+## Counts
+
+Counts are so useful that dplyr provides a simple helper if all you want is a count:
+\leavevmode \newline
+```{r, echo=TRUE, eval = TRUE}
+not_cancelled %>% 
+  count(dest)
+```
+
+
+## Counts cont.
+
+You can optionally provide a weight variable. For example, you could use this to “count” (sum) the total number of miles a plane flew:
+\leavevmode \newline
+```{r, echo=TRUE, eval = TRUE}
+not_cancelled %>% 
+  count(tailnum, wt = distance)
+```
+
+
+## Exercises
+
+[5.6.7 Exercises](http://r4ds.had.co.nz/transform.html#exercises-11)
+
+
+## Relational data (Chapter 13)
+
+Collectively, multiple tables of data are called **relational data** (relations between a pair of tables)  
+  
+![relational](IMG/relational-nycflights.png)
+
+
+## Relational data cont.
+
+- Mutating joins, which add new variables to one data frame from matching observations in another.  
+- Filtering joins, which filter observations from one data frame based on whether or not they match an observation in the other table.  
+- Set operations, which treat observations as if they were set elements.
+\leavevmode \newline \newline
+Generally, dplyr is a little easier to use than SQL because dplyr is specialised to do data analysis.
+
+
+
+## Other packages of the tidyverse
+
+> - readr: import data (flat files)
+> - tidyr: tidy data
+> - dplyr: wrangle data
+> - stringr: functions to work with strings
+> - forcats: functions to work with factors
+> - purrr: iteration, replacement of apply functions
+> - ggplot2: plot data
+
+> - even more packages: e.g. import .xls and .xlsx sheets (readxl), for dates and date-times (lubridate), ...
