@@ -5,25 +5,14 @@
 
 ### University of Zurich
 ### URPP Evolution in Action
-![URPP logo](Logo_URPP_kl2.png)
+![URPP logo](IMG/Logo_URPP_kl2.png)
 
 Stefan Wyder
 
 stefan.wyder@uzh.ch  
 
-
-## Table of Content
-
-
-&nbsp;   | &nbsp; | &nbsp;
--------- | --- | --- 
-9.30 - 9.40 | **Welcome & Introduction** | SW&HTL
-9.40 - 12.30 | **Introduction to the command line** <br /> Working with files, working with text, pipes <br /> [Presentation](LinuxB
-ash.pdf)  \| [Demo](demo_filesystem.md) \| [Hands-on 1](Hands-on_unix_Part1.md) \| [Hands-on 2](Hands-on_unix_Part2.md) | SW
- | |
-13.30 - 14.00 | Working with text files | SW
-14.00 - 17.30 | **Bash scripting** <br /> [Presentation](BashScripting.pdf) \| [Hands-on](Exercises_BashScripting.pdf) | HTL
-
+  
+  
 ## Installation
 
 - R and [Rstudio](https://www.rstudio.com/products/rstudio/download/)
