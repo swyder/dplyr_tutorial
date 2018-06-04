@@ -17,9 +17,10 @@ stefan.wyder@uzh.ch
 
 - R and [Rstudio](https://www.rstudio.com/products/rstudio/download/)
 - You can install the R packages that we will use in the tutorial with 2 lines (from the R console):
+  ```{r}
   install.packages("tidyverse")
   install.packages("nycflights13")
-
+  ```
 
 ## Recommended websites
 
@@ -33,3 +34,7 @@ stefan.wyder@uzh.ch
 **Online learning**  
 - [Rstudio video](https://www.rstudio.com/resources/webinars/data-wrangling-with-r-and-rstudio/)
 - [DataCamp course on dplyr ($$)](https://www.datacamp.com/courses/dplyr-data-manipulation-r-tutorial)
+  
+**Other tutorials**  
+- [simple tutorial with mammals sleep data](http://genomicsclass.github.io/book/pages/dplyr_tutorial.html) and [exercises](http://genomicsclass.github.io/book/pages/dplyr_intro_exercises.html)  
+- [dplyr and other tidyverse packages - intro and more advanced stuff like joins, stringr, forcat, ...](http://stat545.com/topics.html)

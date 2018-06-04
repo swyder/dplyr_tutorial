@@ -1,0 +1,236 @@
+---
+title: "Solutions for dplyr/tidyverse URPP tutorial.Rmd"
+author: "Stefan Wyder"
+date: "June 4, 2018"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, echo=TRUE, eval=TRUE, message=FALSE}
+library(tidyverse)
+library(nycflights13)
+```
+
+
+## Exercises 2
+
+Find all flights that  
+\leavevmode \newline
+1. Had an arrival delay of two or more hours  
+```{r echo=TRUE, eval=TRUE}
+   filter(flights, arr_delay >= 120)  
+```
+
+2. Flew to Houston (IAH or HOU)  
+```{r echo=TRUE, eval=TRUE}
+   filter(flights, dest %in% c("IAH", "HOU")) 
+```   
+
+3. Departed in summer (July, August, and September)  
+```{r echo=TRUE, eval=TRUE}
+filter(flights, month >= 7, month <= 9)
+# also correct:
+# filter(flights, between(month, 7, 9))
+# filter(flights, month in c(7,8,9))
+```
+
+4. Arrived more than two hours late, but didn’t leave late  
+```{r echo=TRUE, eval=TRUE}
+filter(flights, dep_delay <= 0, arr_delay > 120)
+# these are also correct (the !is.na condition is more explicit but redundant):
+# filter(flights, !is.na(dep_delay), dep_delay <= 0, arr_delay > 120)
+# filter(flights, !is.na(dep_delay) & dep_delay <= 0 & arr_delay > 120)
+```
+
+5. Were delayed by at least an hour, but made up over 30 minutes in flight  
+```{r echo=TRUE, eval=TRUE}
+filter(flights, dep_delay >= 60, dep_delay - arr_delay > 30)
+# explicit omission of NAs is redundant but might increase readibility
+# filter(flights, !is.na(dep_delay),
+#       dep_delay >= 60, dep_delay - arr_delay > 30)
+```
+  
+6. How many flights have a missing dep_time? What other variables are missing? What might these rows represent? 
+```{r echo=TRUE, eval=TRUE}
+filter(flights, is.na(dep_time))
+```
+Since arr_time is also missing, these are canceled flights.
+
+```{r echo=TRUE, eval=TRUE}
+# this is not the tidyverse way:
+table(filter(flights, is.na(dep_time))$arr_time, useNA = "always")
+# tidyverse way (which we will learn only later in the course)
+filter(flights, is.na(dep_time)) %>% count(arr_time)
+```
+
+
+## Exercises 3
+
+1. Sort flights to find the most delayed flights. Find the flights that left earliest
+```{r echo=TRUE, eval=TRUE}
+# The most delayed flights are found by sorting by dep_delay in descending order. 
+# There was a flight delayed more than 21 hours.
+arrange(flights, desc(dep_delay))
+```
+
+Find the flights that left earliest
+```{r echo=TRUE, eval=TRUE}
+# If we sort dep_delay in ascending order, we get those that left earliest.
+# There was a flight that left 43 minutes early.
+arrange(flights, dep_delay)
+```
+
+2. How could you use arrange() to sort all missing values to the start? (Hint: use `is.na()`)
+```{r echo=TRUE, eval=TRUE}
+arrange(flights, desc(is.na(dep_time)), dep_time)
+```
+
+3. Which flights traveled the longest? Which traveled the shortest?
+```{r echo=TRUE, eval=TRUE}
+# The longest flights are the Hawaii Air (HA 51) between JFK and HNL (Honolulu) at 4,983 miles.
+arrange(flights, desc(distance))
+```
+
+We will use later how to use the pipe which is handy for plausibility checking and printing all columns:   
+We can use the `head()` function to take the first row and `glimpse()` to print all columns:
+```{r echo=TRUE, eval=TRUE}
+ arrange(flights, desc(distance)) %>% head(n=1) %>% glimpse()
+```
+
+Alternatively, we can use the `print()` function (`width = Inf` to show all columns)
+```{r echo=TRUE, eval=TRUE}
+arrange(flights, desc(distance)) %>% print(., n=1, width = Inf)
+```
+
+Which traveled the shortest?
+```{r echo=TRUE, eval=TRUE}
+# Apart from an EWR to LGA flight that was canceled, the shortest flights are 
+# the Envoy Air Flights between EWR and PHL at 80 miles.
+arrange(flights, distance)
+```
+
+
+## Exercises 4
+
+1. Brainstorm as many ways as possible to select dep_time, dep_delay, arr_time, and arr_delay from flights.  
+```{r echo=TRUE, eval=FALSE}
+select(flights, dep_time, dep_delay, arr_time, arr_delay)
+select(flights, starts_with("dep_"), starts_with("arr_"))
+select(flights, matches("^(dep|arr)_(time|delay)$"))
+# using ends_with() doesn’t work well since it would return both sched_arr_time and sched_dep_time.
+# also the base R subsetting with square brackets works:
+flights[, c("dep_time", "dep_delay", "arr_time", "arr_delay")]
+```
+
+2. What happens if you include the name of a variable multiple times in a `select()` call?
+
+```{r echo=TRUE, eval=TRUE}
+select(flights, year, month, day, year, year)
+```
+It ignores the duplicates, and that variable is only included once. No error, warning, or message is emitted.
+
+
+3. Does the result of running the following code surprise you? How do the select helpers deal with case by default? How can you change that default?
+```{r, echo=TRUE, eval = TRUE}
+# The default behavior for contains() is to ignore case.
+select(flights, contains("TIME"))
+```
+
+```{r echo=TRUE, eval=TRUE}
+select(flights, contains("TIME", ignore.case = FALSE))
+```
+
+
+## Exercises 5
+
+1. Currently dep_time and sched_dep_time are convenient to look at, but hard to compute with because they’re not really continuous numbers. Convert them to a more convenient representation of number of minutes since midnight.  
+\leavevmode \newline
+Actual departure and arrival times, local time zone. It seems they are not minutes as values between 60 and 99 are missing (but the variable description could be better).
+
+  To get the departure times in the number of minutes, (integer) divide dep_time by 100 to get the hours since midnight and multiply by 60 and add the remainder of dep_time divided by 100.  
+
+```{r echo=TRUE, eval=TRUE}
+mutate(flights,
+       dep_time_mins = dep_time %/% 100 * 60 + dep_time %% 100,
+       sched_dep_time_mins = sched_dep_time %/% 100 * 60 + sched_dep_time %% 100) %>%
+  select(dep_time, dep_time_mins, sched_dep_time, sched_dep_time_mins)
+```
+
+The clean way is to define a function first and then to reuse it.
+```{r echo=TRUE, eval=TRUE}
+time2mins <- function(x) {
+  x %/% 100 * 60 + x %% 100
+}
+mutate(flights,
+       dep_time_mins = time2mins(dep_time),
+       sched_dep_time_mins = time2mins(sched_dep_time)) %>%
+  select(dep_time, dep_time_mins, sched_dep_time, sched_dep_time_mins)
+```
+
+
+2. Find the 10 most delayed flights using a ranking function. How do you want to handle ties? Carefully read the documentation for `min_rank()`.  
+```{r echo=TRUE, eval=TRUE}
+# We want to handle ties by taking the minimum of tied values. 
+# If three flights are have the same value and are the most delayed, 
+# we would say they are tied for first, not tied for third or second.
+mutate(flights,
+       dep_delay_rank = min_rank(-dep_delay)) %>%
+filter(dep_delay_rank <= 10) %>% 
+arrange(dep_delay_rank) %>% 
+select(dep_delay_rank, everything())  
+```
+
+
+## Exercises 6
+
+1. Look at the number of canceled flights per day. Is there a pattern? Is the proportion of canceled flights related to the average delay?  
+
+```{r echo=TRUE, eval=TRUE}
+canceled_delayed <-
+  flights %>%
+  mutate(canceled = (is.na(arr_delay) | is.na(dep_delay))) %>%
+  group_by(year, month, day) %>%
+  summarise(prop_canceled = mean(canceled),
+            avg_dep_delay = mean(dep_delay, na.rm = TRUE))
+
+ggplot(canceled_delayed, aes(x = avg_dep_delay, prop_canceled)) +
+  geom_point() +
+  geom_smooth()
+#> `geom_smooth()` using method = 'loess' and formula 'y ~ x'
+```
+
+2. Which carrier has the worst delays? Challenge: can you disentangle the effects of bad airports vs. bad carriers? Why/why not? (Hint: think about flights %>% group_by(carrier, dest) %>% summarise(n()))  
+```{r echo=TRUE, eval=TRUE}
+flights %>%
+  group_by(carrier) %>%
+  summarise(arr_delay = mean(arr_delay, na.rm = TRUE)) %>%
+  arrange(desc(arr_delay))
+```
+
+```{r echo=TRUE, eval=TRUE}
+filter(airlines, carrier == "F9")
+```
+Frontier Airlines (FL) has the worst delays.  
+  
+  
+You can get part of the way to disentangling the effects of airports vs. carriers by comparing each flight’s delay to the average delay of destination airport. However, you’d really want to compare it to the average delay of the destination airport, after removing other flights from the same airline. But this is beyond the scope of this tutorial.
+
+3. (advanced) For each plane, count the number of flights before the first delay of greater than 1 hour.
+```{r echo=TRUE, eval=TRUE}
+flights %>%
+  arrange(tailnum, year, month, day) %>%
+  group_by(tailnum) %>%
+  mutate(delay_gt1hr = dep_delay > 60) %>%
+  mutate(before_delay = cumsum(delay_gt1hr)) %>%
+  filter(before_delay < 1) %>%
+  count(sort = TRUE)
+```
+
+
+
+
+```{r echo=TRUE, eval=TRUE}
+```
