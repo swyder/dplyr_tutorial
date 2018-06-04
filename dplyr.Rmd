@@ -167,9 +167,16 @@ If you want to preserve missing values, ask for them explicitly:
 filter(df, is.na(x) | x > 1)
 ```
 
-## Exercises
+## Exercises 2
 
-[5.2.4 Exercises](http://r4ds.had.co.nz/transform.html#exercises-7)
+(from [5.2.4 Exercises](http://r4ds.had.co.nz/transform.html#exercises-7)) Find all flights that  
+\leavevmode \newline
+1. Had an arrival delay of two or more hours  
+2. Flew to Houston (IAH or HOU)  
+3. Departed in summer (July, August, and September)  
+4. Arrived more than two hours late, but didn’t leave late  
+5. Were delayed by at least an hour, but made up over 30 minutes in flight  
+6. How many flights have a missing dep_time? What other variables are missing? What might these rows represent?
 
 
 ## `arrange()`: order rows 
@@ -185,9 +192,15 @@ arrange(flights, desc(arr_delay))  # order in decreasing order
 missing values are always sorted at the end
 
 
-## Exercises
+## Exercises 3
 
-[5.3.1 Exercises](http://r4ds.had.co.nz/transform.html#exercises-8)
+(from ([5.3.1 Exercises](http://r4ds.had.co.nz/transform.html#exercises-8)))  
+
+1. Sort flights to find the most delayed flights. Find the flights that left earliest.  
+2. How could you use arrange() to sort all missing values to the start? (Hint: use is.na())  
+3. Which flights traveled the longest? Which traveled the shortest?
+
+
 
 
 ## Select columns with `select()`
@@ -219,9 +232,16 @@ There are a number of helper functions you can use within select():
 See `?select` for more details.
 
 
-## Exercises
+## Exercises 4
 
-[5.4.1 Exercises](http://r4ds.had.co.nz/transform.html#exercises-9)
+(from [5.4.1 Exercises](http://r4ds.had.co.nz/transform.html#exercises-9))  
+
+1. Brainstorm as many ways as possible to select dep_time, dep_delay, arr_time, and arr_delay from flights.  
+2. What happens if you include the name of a variable multiple times in a select() call?  
+3. Does the result of running the following code surprise you? How do the select helpers deal with case by default? How can you change that default?
+```{r, echo=TRUE, eval = FALSE}
+select(flights, contains("TIME"))
+```
 
 
 ## Add new variables with `mutate()`
@@ -274,9 +294,13 @@ transmute(flights,
 
 
 
-## Exercises
+## Exercises 5
 
-[5.5.2 Exercises](http://r4ds.had.co.nz/transform.html#exercises-10)
+(from [5.5.2 Exercises](http://r4ds.had.co.nz/transform.html#exercises-10))  
+
+1. Currently dep_time and sched_dep_time are convenient to look at, but hard to compute with because they’re not really continuous numbers. Convert them to a more convenient representation of number of minutes since midnight.  
+2. Find the 10 most delayed flights using a ranking function. How do you want to handle ties? Carefully read the documentation for min_rank().  
+
 
 
 ## Grouped summaries with `summarise()`
@@ -411,9 +435,13 @@ not_cancelled %>%
 ```
 
 
-## Exercises
+## Exercises 6
 
-[5.6.7 Exercises](http://r4ds.had.co.nz/transform.html#exercises-11)
+(from [5.6.7 Exercises](http://r4ds.had.co.nz/transform.html#exercises-11))
+
+1. Look at the number of canceled flights per day. Is there a pattern? Is the proportion of canceled flights related to the average delay?  
+2. Which carrier has the worst delays? Challenge: can you disentangle the effects of bad airports vs. bad carriers? Why/why not? (Hint: think about flights %>% group_by(carrier, dest) %>% summarise(n()))  
+3. (advanced) For each plane, count the number of flights before the first delay of greater than 1 hour.  
 
 
 ## Relational data (Chapter 13)
